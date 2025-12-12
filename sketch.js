@@ -1,12 +1,19 @@
 let song;
 let playBtn, pauseBtn, stopBtn;
 
+let fft;
+let amp;
+
 function preload() {
   song = loadSound("music.mp3");
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
+
+  fft = new p5.FFT(0.8, 64);
+  amp = new p5.Amplitude();
+
   setupButtons();
 }
 
@@ -36,6 +43,14 @@ function setupButtons() {
 
 function draw() {
   background(20);
+
+  // test: draw ellipse reacting to volume
+  let level = amp.getLevel();
+  let size = map(level, 0, 0.3, 20, 200);
+
+  noStroke();
+  fill(100, 150, 255);
+  ellipse(width / 2, height / 2, size);
 }
 
 function windowResized() {
