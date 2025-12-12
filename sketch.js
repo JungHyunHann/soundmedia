@@ -13,6 +13,7 @@ function preload() {
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
+  angleMode(DEGREES);
 
   fft = new p5.FFT(0.8, 64);
   amp = new p5.Amplitude();
@@ -51,10 +52,22 @@ function draw() {
   drawBackground();
 
   let level = amp.getLevel();
-  let size = map(level, 0, 0.3, 20, 200);
+  let spectrum = fft.analyze();
+  let waveform = fft.waveform();
 
+  // Pulse
+  drawPulse(level);
+
+  // EQ Bars
+  drawEQ(spectrum, level);
+
+  // Waveform
+  drawWaveform(waveform);
+
+  // 기존 테스트 원 유지
+  let size = map(level, 0, 0.3, 20, 200);
   noStroke();
-  fill(100, 150, 255);
+  fill(100, 150, 255, 150);
   ellipse(width / 2, height / 2, size);
 }
 
@@ -76,6 +89,72 @@ function drawBackground() {
   drawingContext.fillStyle = g;
   noStroke();
   rect(0, 0, width, height);
+}
+
+function drawPulse(level) {
+  let size = map(level, 0, 0.3, 80, 260);
+
+  push();
+  translate(width / 2, height / 2 - 100);
+
+  // Outer Glow
+  stroke(themeBlue);
+  strokeWeight(20);
+  stroke(red(themeBlue), green(themeBlue), blue(themeBlue), 40);
+  noFill();
+  ellipse(0, 0, size + 70);
+
+  // Main Circle
+  stroke(themeBlue);
+  strokeWeight(4);
+  ellipse(0, 0, size);
+
+  pop();
+}
+
+function drawEQ(spectrum, level) {
+  let barWidth = width / spectrum.length;
+  let shake = map(level, 0, 0.3, 0, 2);
+
+  push();
+  translate(0, shake);
+
+  for (let i = 0; i < spectrum.length; i++) {
+    let v = spectrum[i];
+    let h = map(v, 0, 255, 2, height * 0.25);
+
+    noStroke();
+    fill(150, 200, 255, 180);
+    rect(i * barWidth, height - h, barWidth - 2, h);
+  }
+
+  pop();
+}
+
+function drawWaveform(waveform) {
+  noFill();
+
+  // Wave shadow (부드러운 그림자)
+  stroke(180, 200, 255, 60);
+  strokeWeight(6);
+  beginShape();
+  for (let i = 0; i < waveform.length; i++) {
+    let x = map(i, 0, waveform.length, 0, width);
+    let y = map(waveform[i], -1, 1, height * 0.6, height * 0.85);
+    vertex(x, y);
+  }
+  endShape();
+
+  // Main waveform 라인
+  stroke(themeBlue);
+  strokeWeight(3);
+  beginShape();
+  for (let i = 0; i < waveform.length; i++) {
+    let x = map(i, 0, waveform.length, 0, width);
+    let y = map(waveform[i], -1, 1, height * 0.57, height * 0.82);
+    vertex(x, y);
+  }
+  endShape();
 }
 
 function windowResized() {
