@@ -1,11 +1,18 @@
-let song;
-let playBtn, pauseBtn, stopBtn;
+//-----------------------------------------------------------
+// BLUE NEON VISUALIZER — FULL EDITION
+//-----------------------------------------------------------
 
+let song;
 let fft;
 let amp;
 
-let themeDark;
-let themeBlue;
+let playBtn, pauseBtn, stopBtn;
+
+let ripples = [];
+let themeBlue, themeLight, themeDark;
+
+let colorModeIndex = 0;
+let visMode = 0;
 
 function preload() {
   song = loadSound("music.mp3");
@@ -18,10 +25,20 @@ function setup() {
   fft = new p5.FFT(0.8, 64);
   amp = new p5.Amplitude();
 
-  themeDark = color(10, 15, 35);
-  themeBlue = color(45, 110, 255);
-
+  setupColorMode(0);
   setupButtons();
+}
+
+function setupColorMode(mode) {
+  if (mode === 0) {
+    themeDark = color(10, 15, 35);
+    themeBlue = color(45, 110, 255);
+    themeLight = color(150, 190, 255);
+  } else {
+    themeDark = color(20, 30, 50);
+    themeBlue = color(200, 220, 255);
+    themeLight = color(230, 240, 255);
+  }
 }
 
 function setupButtons() {
@@ -29,10 +46,10 @@ function setupButtons() {
   pauseBtn = createButton("Pause");
   stopBtn = createButton("Stop");
 
-  let buttons = [playBtn, pauseBtn, stopBtn];
+  let btns = [playBtn, pauseBtn, stopBtn];
   let x = 20;
 
-  buttons.forEach((btn) => {
+  btns.forEach((btn) => {
     btn.position(x, 20);
     btn.style("padding", "8px 14px");
     btn.style("background", "#112244");
@@ -49,30 +66,26 @@ function setupButtons() {
 }
 
 function draw() {
-  drawBackground();
-
   let level = amp.getLevel();
   let spectrum = fft.analyze();
   let waveform = fft.waveform();
 
-  // Pulse
-  drawPulse(level);
+  drawBackground(level);
 
-  // EQ Bars
-  drawEQ(spectrum, level);
+  if (visMode === 0) {
+    drawEQ(spectrum, level);
+    drawWaveform(waveform);
+    drawPulse(level);
+  }
+  if (visMode === 1) drawEQ(spectrum, level);
+  if (visMode === 2) drawWaveform(waveform);
+  if (visMode === 3) drawPulse(level);
 
-  // Waveform
-  drawWaveform(waveform);
-
-  // 기존 테스트 원 유지
-  let size = map(level, 0, 0.3, 20, 200);
-  noStroke();
-  fill(100, 150, 255, 150);
-  ellipse(width / 2, height / 2, size);
+  drawRipples();
+  drawLabels();
 }
 
-function drawBackground() {
-  let level = amp.getLevel();
+function drawBackground(level) {
   let offset = map(level, 0, 0.3, 0, 30);
 
   let g = drawingContext.createLinearGradient(0, 0, 0, height);
@@ -80,9 +93,9 @@ function drawBackground() {
   g.addColorStop(
     1,
     color(
-      red(themeBlue) / 3 + offset,
-      green(themeBlue) / 3 + offset,
-      blue(themeBlue) / 3 + offset
+      red(themeBlue) / 4 + offset,
+      green(themeBlue) / 4 + offset,
+      blue(themeBlue) / 4 + offset
     )
   );
 
@@ -95,16 +108,14 @@ function drawPulse(level) {
   let size = map(level, 0, 0.3, 80, 260);
 
   push();
-  translate(width / 2, height / 2 - 100);
+  translate(width / 2, height * 0.35);
 
-  // Outer Glow
   stroke(themeBlue);
   strokeWeight(20);
   stroke(red(themeBlue), green(themeBlue), blue(themeBlue), 40);
   noFill();
   ellipse(0, 0, size + 70);
 
-  // Main Circle
   stroke(themeBlue);
   strokeWeight(4);
   ellipse(0, 0, size);
@@ -113,19 +124,22 @@ function drawPulse(level) {
 }
 
 function drawEQ(spectrum, level) {
-  let barWidth = width / spectrum.length;
+  let bw = width / spectrum.length;
   let shake = map(level, 0, 0.3, 0, 2);
 
   push();
   translate(0, shake);
+
+  fill(0, 0, 0, 40);
+  rect(0, height - 40, width, 40);
 
   for (let i = 0; i < spectrum.length; i++) {
     let v = spectrum[i];
     let h = map(v, 0, 255, 2, height * 0.25);
 
     noStroke();
-    fill(150, 200, 255, 180);
-    rect(i * barWidth, height - h, barWidth - 2, h);
+    fill(themeLight);
+    rect(i * bw, height - h, bw - 2, h);
   }
 
   pop();
@@ -134,27 +148,91 @@ function drawEQ(spectrum, level) {
 function drawWaveform(waveform) {
   noFill();
 
-  // Wave shadow (부드러운 그림자)
-  stroke(180, 200, 255, 60);
+  stroke(themeLight);
   strokeWeight(6);
+  stroke(red(themeLight), green(themeLight), blue(themeLight), 40);
   beginShape();
   for (let i = 0; i < waveform.length; i++) {
     let x = map(i, 0, waveform.length, 0, width);
-    let y = map(waveform[i], -1, 1, height * 0.6, height * 0.85);
+    let y = map(waveform[i], -1, 1, height * 0.58, height * 0.83);
     vertex(x, y);
   }
   endShape();
 
-  // Main waveform 라인
   stroke(themeBlue);
   strokeWeight(3);
   beginShape();
   for (let i = 0; i < waveform.length; i++) {
     let x = map(i, 0, waveform.length, 0, width);
-    let y = map(waveform[i], -1, 1, height * 0.57, height * 0.82);
+    let y = map(waveform[i], -1, 1, height * 0.55, height * 0.8);
     vertex(x, y);
   }
   endShape();
+}
+
+class Ripple {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.size = 0;
+    this.alpha = 200;
+  }
+
+  update() {
+    this.size += 10;
+    this.alpha -= 3;
+  }
+
+  draw() {
+    stroke(themeBlue);
+    strokeWeight(10);
+    stroke(red(themeBlue), green(themeBlue), blue(themeBlue), this.alpha / 4);
+    noFill();
+    ellipse(this.x, this.y, this.size + 30);
+
+    stroke(themeLight);
+    strokeWeight(2);
+    stroke(red(themeLight), green(themeLight), blue(themeLight), this.alpha);
+    ellipse(this.x, this.y, this.size);
+  }
+
+  get dead() {
+    return this.alpha <= 0;
+  }
+}
+
+function drawRipples() {
+  ripples.forEach((r) => {
+    r.update();
+    r.draw();
+  });
+  ripples = ripples.filter((r) => !r.dead);
+}
+
+function mousePressed() {
+  ripples.push(new Ripple(mouseX, mouseY));
+}
+
+function drawLabels() {
+  fill(180);
+  noStroke();
+  textSize(14);
+
+  let label = "C : Color Mode  |  SPACE : Visualizer Mode";
+  let tw = textWidth(label);
+
+  text(label, width - tw - 20, 30);
+}
+
+function keyPressed() {
+  if (key === "c" || key === "C") {
+    colorModeIndex = (colorModeIndex + 1) % 2;
+    setupColorMode(colorModeIndex);
+  }
+
+  if (key === " ") {
+    visMode = (visMode + 1) % 4;
+  }
 }
 
 function windowResized() {
