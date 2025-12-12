@@ -1,7 +1,3 @@
-//-----------------------------------------------------------
-// BLUE NEON VISUALIZER — FULL EDITION
-//-----------------------------------------------------------
-
 let song;
 let fft;
 let amp;
@@ -14,10 +10,12 @@ let themeBlue, themeLight, themeDark;
 let colorModeIndex = 0;
 let visMode = 0;
 
+// 노래 파일 로드
 function preload() {
   song = loadSound("music.mp3");
 }
 
+// 초기 설정
 function setup() {
   createCanvas(windowWidth, windowHeight);
   angleMode(DEGREES);
@@ -29,6 +27,7 @@ function setup() {
   setupButtons();
 }
 
+// 색상 모드 설정
 function setupColorMode(mode) {
   if (mode === 0) {
     themeDark = color(10, 15, 35);
@@ -41,6 +40,7 @@ function setupColorMode(mode) {
   }
 }
 
+// 버튼 UI 세팅
 function setupButtons() {
   playBtn = createButton("Play");
   pauseBtn = createButton("Pause");
@@ -65,6 +65,7 @@ function setupButtons() {
   stopBtn.mousePressed(() => song.stop());
 }
 
+// 매 프레임마다 호출
 function draw() {
   let level = amp.getLevel();
   let spectrum = fft.analyze();
@@ -85,6 +86,7 @@ function draw() {
   drawLabels();
 }
 
+// 배경 그리기
 function drawBackground(level) {
   let offset = map(level, 0, 0.3, 0, 30);
 
@@ -104,6 +106,7 @@ function drawBackground(level) {
   rect(0, 0, width, height);
 }
 
+// 펄스 원형 그리기
 function drawPulse(level) {
   let size = map(level, 0, 0.3, 80, 260);
 
@@ -123,6 +126,7 @@ function drawPulse(level) {
   pop();
 }
 
+// EQ 바 그리기
 function drawEQ(spectrum, level) {
   let bw = width / spectrum.length;
   let shake = map(level, 0, 0.3, 0, 2);
@@ -145,6 +149,7 @@ function drawEQ(spectrum, level) {
   pop();
 }
 
+// 웨이브폼 그리기
 function drawWaveform(waveform) {
   noFill();
 
@@ -170,6 +175,7 @@ function drawWaveform(waveform) {
   endShape();
 }
 
+// Ripple 클래스
 class Ripple {
   constructor(x, y) {
     this.x = x;
@@ -201,6 +207,7 @@ class Ripple {
   }
 }
 
+// 리플 효과 모음 그리기
 function drawRipples() {
   ripples.forEach((r) => {
     r.update();
@@ -209,21 +216,24 @@ function drawRipples() {
   ripples = ripples.filter((r) => !r.dead);
 }
 
+// 마우스 클릭 리플 생성
 function mousePressed() {
   ripples.push(new Ripple(mouseX, mouseY));
 }
 
+// 화면 오른쪽 위 라벨 표시
 function drawLabels() {
   fill(180);
   noStroke();
   textSize(14);
 
-  let label = "C : Color Mode  |  SPACE : Visualizer Mode";
+  let label = "C : 색상 모드  |  SPACE : 비주얼 모드 전환";
   let tw = textWidth(label);
 
   text(label, width - tw - 20, 30);
 }
 
+// 키보드 입력 처리
 function keyPressed() {
   if (key === "c" || key === "C") {
     colorModeIndex = (colorModeIndex + 1) % 2;
@@ -235,6 +245,7 @@ function keyPressed() {
   }
 }
 
+// 창 크기 변경 대응
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
